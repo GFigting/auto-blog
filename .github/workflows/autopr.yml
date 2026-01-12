@@ -32,9 +32,7 @@ jobs:
     - name: Create PR if not exists
       if: env.PR_EXISTS == '0'
       run: |
-        PR_NUMBER=$(gh pr create --base main --head stage --title "Auto PR from stage to main" --body "This is an automated PR created by GitHub Actions when changes were pushed to the stage branch.
-
-This PR will be automatically merged after review." --label autopr --json number | jq -r .number)
+        PR_NUMBER=$(gh pr create --base main --head stage --title "Auto PR from stage to main" --body "This is an automated PR created by GitHub Actions when changes were pushed to the stage branch. This PR will be automatically merged after review." --label autopr --json number | jq -r .number)
         echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
       env:
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
