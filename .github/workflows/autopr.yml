@@ -40,6 +40,19 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
     
+    - name: Create 'autopr' label if not exists
+      run: |
+        # 检查标签是否存在
+        LABEL_EXISTS=$(gh label list | grep -c "^autopr")
+        if [ $LABEL_EXISTS -eq 0 ]; then
+          echo "DEBUG: Creating 'autopr' label"
+          gh label create autopr --description "Automated PR from stage to main" --color "#006b75"
+        else
+          echo "DEBUG: 'autopr' label already exists"
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
+
     - name: Create PR if not exists
       if: env.PR_EXISTS == '0'
       run: |
