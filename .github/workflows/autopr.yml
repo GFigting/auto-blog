@@ -1,0 +1,26 @@
+name: Auto PR from stage to main
+
+on:
+  push:
+    branches: [ stage ]
+
+jobs:
+  create-pull-request:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    
+    - name: Create Pull Request
+      uses: repo-sync/pull-request@v2
+      with:
+        source_branch: stage
+        destination_branch: main
+        pr_title: 'Auto PR from stage to main'
+        pr_body: |
+          This is an automated PR created by GitHub Actions when changes were pushed to the stage branch.
+          
+          Please review the changes before merging.
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        pr_label: 'autopr'
