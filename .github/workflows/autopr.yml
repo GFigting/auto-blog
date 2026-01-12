@@ -24,12 +24,12 @@ jobs:
     - name: Debug - Check GitHub CLI version
       run: gh --version
       env:
-        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
     
     - name: Debug - List existing PRs
       run: gh pr list --base main --head stage --json number,title,state
       env:
-        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
     
     - name: Check if PR exists
       id: check-pr
@@ -38,7 +38,7 @@ jobs:
         echo "PR_EXISTS=$PR_EXISTS" >> $GITHUB_ENV
         echo "DEBUG: PR_EXISTS = $PR_EXISTS"
       env:
-        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
     
     - name: Create PR if not exists
       if: env.PR_EXISTS == '0'
@@ -50,7 +50,7 @@ jobs:
         echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
         echo "DEBUG: Created PR with number: $PR_NUMBER"
       env:
-        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
 
     - name: Auto-merge PR
       if: env.PR_EXISTS == '1' || env.PR_NUMBER != ''
@@ -63,4 +63,4 @@ jobs:
         # 自动合并PR
         gh pr merge $PR_NUMBER --squash --title "Auto-merged PR from stage to main" --body "This is an automated PR created and merged by GitHub Actions when changes were pushed to the stage branch." --delete-branch
       env:
-        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
