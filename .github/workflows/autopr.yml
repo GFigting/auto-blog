@@ -26,6 +26,8 @@ jobs:
           This is an automated PR created by GitHub Actions when changes were pushed to the stage branch.
           
           Please review the changes before merging.
-        # 使用GH_TOKEN作为备选，优先使用GITHUB_TOKEN
-        github_token: ${{ secrets.GITHUB_TOKEN || secrets.GH_TOKEN }}
+        # 优先使用GH_TOKEN，然后使用GITHUB_TOKEN
+        github_token: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
         pr_label: 'autopr'
+        # 启用调试模式以获取更详细的日志
+        debug: true
