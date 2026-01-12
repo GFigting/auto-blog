@@ -21,19 +21,34 @@ jobs:
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
     
+    - name: Debug - Check GitHub CLI version
+      run: gh --version
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+    
+    - name: Debug - List existing PRs
+      run: gh pr list --base main --head stage --json number,title,state
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+    
     - name: Check if PR exists
       id: check-pr
       run: |
         PR_EXISTS=$(gh pr list --base main --head stage --json number | jq -r '. | length')
         echo "PR_EXISTS=$PR_EXISTS" >> $GITHUB_ENV
+        echo "DEBUG: PR_EXISTS = $PR_EXISTS"
       env:
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
     
     - name: Create PR if not exists
       if: env.PR_EXISTS == '0'
       run: |
-        PR_NUMBER=$(gh pr create --base main --head stage --title "Auto PR from stage to main" --body "This is an automated PR created by GitHub Actions when changes were pushed to the stage branch. This PR will be automatically merged after review." --label autopr --json number | jq -r .number)
+        echo "DEBUG: Attempting to create PR from stage to main"
+        PR_RESULT=$(gh pr create --base main --head stage --title "Auto PR from stage to main" --body "This is an automated PR created by GitHub Actions when changes were pushed to the stage branch. This PR will be automatically merged after review." --label autopr --json number)
+        echo "DEBUG: PR creation result: $PR_RESULT"
+        PR_NUMBER=$(echo "$PR_RESULT" | jq -r .number)
         echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
+        echo "DEBUG: Created PR with number: $PR_NUMBER"
       env:
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
