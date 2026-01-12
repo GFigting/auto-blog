@@ -26,5 +26,8 @@ jobs:
           This is an automated PR created by GitHub Actions when changes were pushed to the stage branch.
           
           Please review the changes before merging.
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        # Note: If using GITHUB_TOKEN fails, create a personal access token with repo permissions
+        # and store it as GH_TOKEN in repository secrets
+        github_token: ${{ secrets.GITHUB_TOKEN || secrets.GH_TOKEN }}
         pr_label: 'autopr'
+        debug: true
