@@ -27,14 +27,14 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
     
     - name: Debug - List existing PRs
-      run: gh pr list --base main --head stage --json number,title,state
+      run: gh pr list --base main --head stage
       env:
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
     
     - name: Check if PR exists
       id: check-pr
       run: |
-        PR_EXISTS=$(gh pr list --base main --head stage --json number | jq -r '. | length')
+        PR_EXISTS=$(gh pr list --base main --head stage | wc -l)
         echo "PR_EXISTS=$PR_EXISTS" >> $GITHUB_ENV
         echo "DEBUG: PR_EXISTS = $PR_EXISTS"
       env:
@@ -44,9 +44,9 @@ jobs:
       if: env.PR_EXISTS == '0'
       run: |
         echo "DEBUG: Attempting to create PR from stage to main"
-        PR_RESULT=$(gh pr create --base main --head stage --title "Auto PR from stage to main" --body "This is an automated PR created by GitHub Actions when changes were pushed to the stage branch. This PR will be automatically merged after review." --label autopr --json number)
-        echo "DEBUG: PR creation result: $PR_RESULT"
-        PR_NUMBER=$(echo "$PR_RESULT" | jq -r .number)
+        PR_URL=$(gh pr create --base main --head stage --title "Auto PR from stage to main" --body "This is an automated PR created by GitHub Actions when changes were pushed to the stage branch. This PR will be automatically merged after review." --label autopr --repo $GITHUB_REPOSITORY)
+        echo "DEBUG: PR creation result: $PR_URL"
+        PR_NUMBER=$(echo "$PR_URL" | awk -F'/' '{print $NF}')
         echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_ENV
         echo "DEBUG: Created PR with number: $PR_NUMBER"
       env:
@@ -57,10 +57,12 @@ jobs:
       run: |
         # 获取PR编号
         if [ -z "$PR_NUMBER" ]; then
-          PR_NUMBER=$(gh pr list --base main --head stage --json number | jq -r '.[0].number')
+          PR_NUMBER=$(gh pr list --base main --head stage --repo $GITHUB_REPOSITORY | head -n 1 | awk '{print $1}' | sed 's/#//')
         fi
         
+        echo "DEBUG: PR Number to merge: $PR_NUMBER"
+        
         # 自动合并PR
-        gh pr merge $PR_NUMBER --squash --title "Auto-merged PR from stage to main" --body "This is an automated PR created and merged by GitHub Actions when changes were pushed to the stage branch." --delete-branch
+        gh pr merge $PR_NUMBER --squash --title "Auto-merged PR from stage to main" --body "This is an automated PR created and merged by GitHub Actions when changes were pushed to the stage branch." --delete-branch --repo $GITHUB_REPOSITORY
       env:
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
