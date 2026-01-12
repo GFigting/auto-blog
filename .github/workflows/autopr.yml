@@ -54,9 +54,11 @@ jobs:
 
       - name: Auto-merge PR
         if: steps.pr.outputs.number != ''
-        run: |
-          gh pr merge ${{ steps.pr.outputs.number }} \
-            --squash \
-            --subject "Auto-merged from stage to main" \
-            --body "Automatically merged from stage branch." \
-            --delete-branch
+        uses: ridedott/merge-me-action@v2
+        with:
+          github-token: ${{ env.GH_TOKEN }}
+          pull-request-number: ${{ steps.pr.outputs.number }}
+          merge-method: squash
+          commit-title: "Auto-merged from stage to main"
+          commit-message: "Automatically merged from stage branch."
+          delete-branch: true
