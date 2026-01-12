@@ -16,24 +16,21 @@ jobs:
       with:
         fetch-depth: 0
     
-    - name: Set up GitHub CLI
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18.x'
-    
-    - name: Install GitHub CLI
-      run: |
-        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-        sudo apt update
-        sudo apt install -y gh
-    
     - name: Configure Git
       run: |
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
     
-    - name: Create PR with GitHub CLI
+    - name: Check if PR exists
+      id: check-pr
+      run: |
+        PR_EXISTS=$(gh pr list --base main --head stage --json number | jq -r '. | length')
+        echo "PR_EXISTS=$PR_EXISTS" >> $GITHUB_ENV
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+    
+    - name: Create PR if not exists
+      if: env.PR_EXISTS == '0'
       run: |
         gh pr create --base main --head stage --title "Auto PR from stage to main" --body "This is an automated PR created by GitHub Actions when changes were pushed to the stage branch.\n\nPlease review the changes before merging." --label autopr
       env:
