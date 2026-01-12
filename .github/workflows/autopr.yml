@@ -82,13 +82,13 @@ jobs:
     
     - name: Request Review
       if: env.PR_EXISTS == '1' || env.PR_NUMBER != ''
-      uses: thomaseizinger/auto-request-review@v0.13.0
+      uses: necojackarc/auto-request-review@v0.12.0
       with:
-        github_token: ${{ secrets.GH_TOKEN || github.token }}
-        pr_number: ${{ steps.get-pr-number.outputs.pr_number }}
-        # 可以在这里添加 reviewers 或 team_reviewers 参数
+        token: ${{ secrets.GH_TOKEN || github.token }}
+        number: ${{ steps.get-pr-number.outputs.pr_number }}
+        # 可以在这里添加 reviewers 或 teams 参数
         # reviewers: user1,user2
-        # team_reviewers: team1,team2
+        # teams: team1,team2
     
     - name: Auto-merge PR
       if: env.PR_EXISTS == '1' || env.PR_NUMBER != ''
