@@ -28,18 +28,20 @@ jobs:
       - name: Create or update PR
         id: pr
         run: |
-          EXISTING_PR=$(gh pr list --base main --head stage --json number --jq '.[0].number // ""')
+          # 检查是否存在从 stage 到 main 的 PR
+          EXISTING_PR=$(gh pr list --base main --head stage | head -n 1 | awk '{print $1}' | sed 's/#//')
 
           if [ -z "$EXISTING_PR" ]; then
-            PR_NUMBER=$(gh pr create \
+            # 创建新 PR 并获取 PR 编号
+            PR_URL=$(gh pr create \
               --base main \
               --head stage \
               --title "Auto PR from stage to main" \
               --body "Automated PR from stage to main branch." \
-              --label autopr \
-              --json number \
-              --jq '.number')
+              --label autopr)
+            PR_NUMBER=$(echo "$PR_URL" | awk -F'/' '{print $NF}')
           else
+            # 使用现有 PR 编号
             PR_NUMBER=$EXISTING_PR
           fi
 
