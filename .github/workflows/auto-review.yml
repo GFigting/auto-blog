@@ -60,17 +60,17 @@ jobs:
           
           echo "REVIEW_COMMENT=$COMMENT" >> $GITHUB_ENV
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
 
       - name: Add review comment to PR
         if: env.REVIEW_COMMENT != ''
         run: |
           gh pr comment ${{ github.event.pull_request.number }} --body "$REVIEW_COMMENT"
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
 
       - name: Auto-merge PR
         run: |
           gh pr merge ${{ github.event.pull_request.number }} --squash --delete-branch --title "Auto-merged PR: ${{ github.event.pull_request.title }}" --body "${{ github.event.pull_request.body }}\n\n---\n\n✅ 此PR已通过自动Review并合并"
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
