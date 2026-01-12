@@ -1,0 +1,76 @@
+name: Auto Review and Merge PR
+
+on:
+  pull_request:
+    branches: [ stage ]
+    types: [ opened, synchronize ]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  auto-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install gray-matter for Markdown parsing
+        run: npm install gray-matter
+
+      - name: Find modified Markdown files
+        id: find-files
+        run: |
+          # 获取PR中修改的Markdown文件
+          MODIFIED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }} | grep '\.md$')
+          echo "MODIFIED_FILES=$MODIFIED_FILES" >> $GITHUB_ENV
+
+      - name: Generate review comment for each modified file
+        id: generate-comments
+        run: |
+          if [ -z "$MODIFIED_FILES" ]; then
+            echo "没有修改Markdown文件，跳过自动评论"
+            echo "REVIEW_COMMENT=" >> $GITHUB_ENV
+            exit 0
+          fi
+          
+          # 生成评论内容
+          COMMENT="## 文章自动Review\n\n"
+          
+          for file in $MODIFIED_FILES; do
+            if [[ "$file" == data/posts/* ]]; then
+              # 仅处理博客文章
+              POST_COMMENT=$(node scripts/review-post.js "$file")
+              COMMENT="$COMMENT\n### 文件: $file\n\n$POST_COMMENT\n\n---\n\n"
+            fi
+          done
+          
+          echo "REVIEW_COMMENT=$COMMENT" >> $GITHUB_ENV
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Add review comment to PR
+        if: env.REVIEW_COMMENT != ''
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --body "$REVIEW_COMMENT"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Auto-merge PR
+        run: |
+          gh pr merge ${{ github.event.pull_request.number }} --squash --delete-branch --title "Auto-merged PR: ${{ github.event.pull_request.title }}" --body "${{ github.event.pull_request.body }}\n\n---\n\n✅ 此PR已通过自动Review并合并"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}

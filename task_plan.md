@@ -126,3 +126,27 @@ blog/
 - rehype-pretty-code: ^0.10.0
 - tailwindcss: ^3.3.0
 - typescript: ^5.2.0
+
+## GitHub PR机器人功能
+
+### 功能需求
+1. **自动Review**：当PR创建或更新时，自动对PR进行Review
+2. **自动评论**：提取文章的标题和内容概述，作为评论添加到PR中
+3. **自动合并**：在完成Review后，自动合并PR
+
+### 实现步骤
+
+#### 1. 文章信息提取脚本
+- 创建`scripts/review-post.js`脚本
+- 使用gray-matter解析Markdown文件的元数据
+- 提取文章标题、描述和内容概述
+
+#### 2. PR自动Review工作流
+- 创建`.github/workflows/auto-review.yml`工作流
+- 监听PR的opened和synchronize事件
+- 安装依赖并执行文章信息提取脚本
+- 生成评论内容并添加到PR中
+
+#### 3. PR自动合并功能
+- 更新现有的`.github/workflows/autopr.yml`工作流
+- 添加自动合并逻辑
