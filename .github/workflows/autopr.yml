@@ -66,14 +66,35 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
 
-    - name: Auto-merge PR
+    - name: Get PR Number
       if: env.PR_EXISTS == '1' || env.PR_NUMBER != ''
+      id: get-pr-number
       run: |
         # 获取PR编号
         if [ -z "$PR_NUMBER" ]; then
           PR_NUMBER=$(gh pr list --base main --head stage --repo $GITHUB_REPOSITORY | head -n 1 | awk '{print $1}' | sed 's/#//')
         fi
         
+        echo "DEBUG: PR Number: $PR_NUMBER"
+        echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
+    
+    - name: Request Review
+      if: env.PR_EXISTS == '1' || env.PR_NUMBER != ''
+      uses: thomaseizinger/auto-request-review@v0.13.0
+      with:
+        github_token: ${{ secrets.GH_TOKEN || github.token }}
+        pr_number: ${{ steps.get-pr-number.outputs.pr_number }}
+        # 可以在这里添加 reviewers 或 team_reviewers 参数
+        # reviewers: user1,user2
+        # team_reviewers: team1,team2
+    
+    - name: Auto-merge PR
+      if: env.PR_EXISTS == '1' || env.PR_NUMBER != ''
+      run: |
+        # 使用之前获取的PR编号
+        PR_NUMBER=${{ steps.get-pr-number.outputs.pr_number }}
         echo "DEBUG: PR Number to merge: $PR_NUMBER"
         
         # 自动合并PR
