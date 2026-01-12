@@ -34,6 +34,12 @@ export default function PostPage({ params }: PostPageProps) {
           <Calendar size={14} className="mr-1" />
           <span>{formattedDate}</span>
         </div>
+        {post.meta.author && (
+          <div className="flex items-center">
+            <span className="mr-1">作者：</span>
+            <span>{post.meta.author}</span>
+          </div>
+        )}
 
         <div className="flex flex-wrap gap-2">
           {post.meta.tags.map((tag) => (
