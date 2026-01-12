@@ -1,6 +1,6 @@
 import fs from 'fs';
-import path from 'path';
 import matter from 'gray-matter';
+import path from 'path';
 
 export interface PostMeta {
   title: string;
@@ -8,6 +8,7 @@ export interface PostMeta {
   category: string;
   tags: string[];
   description: string;
+  author?: string;
 }
 
 export interface Post {

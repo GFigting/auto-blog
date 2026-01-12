@@ -28,9 +28,17 @@ function PostCard({ post }: PostCardProps) {
       <p className="text-gray-600 mb-4">{post.meta.description}</p>
 
       <div className="flex items-center justify-between text-sm text-gray-500">
-        <div className="flex items-center">
-          <Calendar size={14} className="mr-1" />
-          <span>{formattedDate}</span>
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center">
+            <Calendar size={14} className="mr-1" />
+            <span>{formattedDate}</span>
+          </div>
+          {post.meta.author && (
+            <div className="flex items-center">
+              <span className="mr-1">作者：</span>
+              <span>{post.meta.author}</span>
+            </div>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-2">

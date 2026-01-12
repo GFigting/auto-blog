@@ -4,6 +4,10 @@ on:
   push:
     branches: [ stage ]
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   create-pull-request:
     runs-on: ubuntu-latest
@@ -12,15 +16,22 @@ jobs:
       with:
         fetch-depth: 0
     
-    - name: Create Pull Request
-      uses: repo-sync/pull-request@v2
-      with:
-        source_branch: stage
-        destination_branch: main
-        pr_title: 'Auto PR from stage to main'
-        pr_body: |
-          This is an automated PR created by GitHub Actions when changes were pushed to the stage branch.
-          
-          Please review the changes before merging.
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        pr_label: 'autopr'
+    - name: Configure Git
+      run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+    
+    - name: Check if PR exists
+      id: check-pr
+      run: |
+        PR_EXISTS=$(gh pr list --base main --head stage --json number | jq -r '. | length')
+        echo "PR_EXISTS=$PR_EXISTS" >> $GITHUB_ENV
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+    
+    - name: Create PR if not exists
+      if: env.PR_EXISTS == '0'
+      run: |
+        gh pr create --base main --head stage --title "Auto PR from stage to main" --body "This is an automated PR created by GitHub Actions when changes were pushed to the stage branch.\n\nPlease review the changes before merging." --label autopr
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
