@@ -13,7 +13,6 @@
 # Set error handling and encoding
 $ErrorActionPreference = "Stop"
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-[System.Text.Encoding]::Default = [System.Text.Encoding]::UTF8
 
 Write-Host "=== GitHub Commit Automation ===" -ForegroundColor Green
 
