@@ -6,6 +6,10 @@ import './globals.css';
 export const metadata: Metadata = {
   title: '个人博客',
   description: '分享技术与生活的个人博客',
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({
