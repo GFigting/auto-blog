@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 REM GitHub 提交自动化脚本启动器
 REM 用于调用 PowerShell 脚本执行 Git 提交流程
 

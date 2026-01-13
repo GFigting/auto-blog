@@ -68,6 +68,47 @@ npm run build
 npm start
 ```
 
+## Git提交自动化
+
+项目提供了自动化Git提交脚本，简化了代码提交流程。
+
+### 使用方法
+
+直接运行以下脚本之一即可完成自动化提交：
+
+#### Windows系统
+```bash
+git-commit.bat
+```
+
+#### PowerShell环境
+```bash
+./git-commit.ps1
+```
+
+### 功能特点
+
+- ✅ 自动检查Git状态
+- ✅ 自动添加所有修改的文件
+- ✅ 根据文件变更类型（添加/修改/删除/重命名）自动生成规范的commit message
+- ✅ 自动执行提交并推送到远程stage分支
+- ✅ 支持中英文双语commit message
+- ✅ 完全自动化，无需人工干预
+
+### 生成的commit message格式
+
+脚本会根据文件变更自动生成类似以下格式的commit message：
+
+```
+Add: new-file.txt
+添加了新文件: new-file.txt
+
+Update: existing-file.txt
+更新了文件: existing-file.txt
+
+Auto commit generated at: 2024-01-13 10:04:01
+```
+
 ## 添加文章
 
 在 `data/posts/` 目录下创建 Markdown 文件，文章格式如下：
