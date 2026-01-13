@@ -29,7 +29,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
         run: |
-          EXISTING_PR=$(gh pr list --base main --head stage --state open | grep -oP '#\K[0-9]+' || true)
+          EXISTING_PR=$(gh pr list --base main --head stage --state open | awk 'NR==1 {print $1}' | tr -d '#' || true)
 
           if [ -z "$EXISTING_PR" ]; then
             gh pr create \
@@ -38,7 +38,7 @@ jobs:
               --title "Auto PR from stage to main" \
               --body "Automated PR from stage to main branch." \
               --label autopr
-            PR_NUMBER=$(gh pr list --base main --head stage --state open | grep -oP '#\K[0-9]+')
+            PR_NUMBER=$(gh pr list --base main --head stage --state open | awk 'NR==1 {print $1}' | tr -d '#')
           else
             PR_NUMBER=$EXISTING_PR
           fi
