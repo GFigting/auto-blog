@@ -8,9 +8,6 @@ permissions:
   contents: write
   pull-requests: write
 
-env:
-  GH_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
-
 jobs:
   create-pull-request:
     runs-on: ubuntu-latest
@@ -20,6 +17,8 @@ jobs:
           fetch-depth: 0
 
       - name: Ensure 'autopr' label exists
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
         run: |
           gh label create autopr \
             --description "Automated PR from stage to main" \
@@ -27,6 +26,8 @@ jobs:
 
       - name: Create or update PR
         id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
         run: |
           EXISTING_PR=$(gh pr list --base main --head stage --state open | grep -oP '#\K[0-9]+' || true)
 
