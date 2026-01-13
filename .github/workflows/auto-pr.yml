@@ -1,0 +1,46 @@
+name: Auto PR from stage to main
+
+on:
+  push:
+    branches: [stage]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  GH_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
+
+jobs:
+  create-pull-request:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure 'autopr' label exists
+        run: |
+          gh label create autopr \
+            --description "Automated PR from stage to main" \
+            --color "#006b75" 2>/dev/null || true
+
+      - name: Create or update PR
+        id: pr
+        run: |
+          EXISTING_PR=$(gh pr list --base main --head stage --json number --jq '.[0].number // ""')
+
+          if [ -z "$EXISTING_PR" ]; then
+            PR_NUMBER=$(gh pr create \
+              --base main \
+              --head stage \
+              --title "Auto PR from stage to main" \
+              --body "Automated PR from stage to main branch." \
+              --label autopr \
+              --json number \
+              --jq '.number')
+          else
+            PR_NUMBER=$EXISTING_PR
+          fi
+
+          echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
