@@ -10,8 +10,10 @@
     Created: 2024-01-XX
 #>
 
-# Set error handling
+# Set error handling and encoding
 $ErrorActionPreference = "Stop"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+[System.Text.Encoding]::Default = [System.Text.Encoding]::UTF8
 
 Write-Host "=== GitHub Commit Automation ===" -ForegroundColor Green
 
@@ -19,23 +21,74 @@ Write-Host "=== GitHub Commit Automation ===" -ForegroundColor Green
 Write-Host "`n1. Checking current Git status..." -ForegroundColor Cyan
 git status
 
-# 2. Ask user to continue
-$continue = Read-Host "`nContinue with commit? (Y/N)"
-if ($continue -ne "Y" -and $continue -ne "y") {
-    Write-Host "`nCommit cancelled." -ForegroundColor Yellow
-    exit 0
-}
+# 2. Automatically continue with commit
+Write-Host "`n2. Automatically continuing with commit..." -ForegroundColor Cyan
 
 # 3. Add all changed files
 Write-Host "`n2. Adding all changed files..." -ForegroundColor Cyan
 git add .
 
-# 4. Get commit message
-$commitMessage = Read-Host "`n3. Please enter commit message"
-if ([string]::IsNullOrWhiteSpace($commitMessage)) {
-    Write-Host "`nCommit message cannot be empty. Commit cancelled." -ForegroundColor Red
-    exit 1
+# 4. Generate automatic commit message based on changes
+Write-Host "`n3. Generating commit message based on changes..." -ForegroundColor Cyan
+
+# Get changes
+$changes = git status --porcelain
+
+# Initialize change type arrays
+$addedFiles = @()
+$modifiedFiles = @()
+$deletedFiles = @()
+$renamedFiles = @()
+
+# Process each change
+foreach ($change in $changes) {
+    $changeType = $change.Substring(0, 2).Trim()
+    $fileName = $change.Substring(3).Trim()
+    
+    switch ($changeType) {
+        'A' {
+            $addedFiles += $fileName
+        }
+        'M' {
+            $modifiedFiles += $fileName
+        }
+        'D' {
+            $deletedFiles += $fileName
+        }
+        'R' {
+            $renamedFiles += $fileName
+        }
+    }
 }
+
+# Generate commit message parts
+$commitParts = @()
+
+if ($addedFiles.Count -gt 0) {
+    $commitParts += "Add: $($addedFiles -join ', ')`n添加了新文件: $($addedFiles -join ', ')`n"
+}
+
+if ($modifiedFiles.Count -gt 0) {
+    $commitParts += "Update: $($modifiedFiles -join ', ')`n更新了文件: $($modifiedFiles -join ', ')`n"
+}
+
+if ($deletedFiles.Count -gt 0) {
+    $commitParts += "Delete: $($deletedFiles -join ', ')`n删除了文件: $($deletedFiles -join ', ')`n"
+}
+
+if ($renamedFiles.Count -gt 0) {
+    $commitParts += "Rename: $($renamedFiles -join ', ')`n重命名了文件: $($renamedFiles -join ', ')`n"
+}
+
+# Combine parts into final commit message
+if ($commitParts.Count -gt 0) {
+    $commitMessage = $commitParts -join "`n`n" + 
+                    "`n`nAuto commit generated at: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+} else {
+    $commitMessage = "No changes to commit $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+}
+
+Write-Host "`nGenerated commit message:`n$commitMessage" -ForegroundColor Cyan
 
 # 5. Perform commit
 Write-Host "`n4. Performing commit..." -ForegroundColor Cyan

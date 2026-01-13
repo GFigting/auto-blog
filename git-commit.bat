@@ -6,5 +6,4 @@ echo === GitHub 提交自动化 ===
 echo.
 powershell -ExecutionPolicy Bypass -File "%~dp0git-commit.ps1"
 echo.
-echo 按任意键退出...
-pause > nul
+echo 提交流程已完成，脚本将自动退出...
