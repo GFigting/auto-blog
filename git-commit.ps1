@@ -10,8 +10,10 @@
     Created: 2024-01-XX
 #>
 
-# Set error handling
+# Set error handling and encoding
 $ErrorActionPreference = "Stop"
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+[System.Text.Encoding]::Default = [System.Text.Encoding]::UTF8
 
 Write-Host "=== GitHub Commit Automation ===" -ForegroundColor Green
 
@@ -63,37 +65,25 @@ foreach ($change in $changes) {
 $commitParts = @()
 
 if ($addedFiles.Count -gt 0) {
-    $commitParts += "Add: $($addedFiles -join ', ')
-" + 
-                   "添加了新文件: $($addedFiles -join ', ')"
+    $commitParts += "Add: $($addedFiles -join ', ')`n添加了新文件: $($addedFiles -join ', ')`n"
 }
 
 if ($modifiedFiles.Count -gt 0) {
-    $commitParts += "Update: $($modifiedFiles -join ', ')
-" + 
-                   "更新了文件: $($modifiedFiles -join ', ')"
+    $commitParts += "Update: $($modifiedFiles -join ', ')`n更新了文件: $($modifiedFiles -join ', ')`n"
 }
 
 if ($deletedFiles.Count -gt 0) {
-    $commitParts += "Delete: $($deletedFiles -join ', ')
-" + 
-                   "删除了文件: $($deletedFiles -join ', ')"
+    $commitParts += "Delete: $($deletedFiles -join ', ')`n删除了文件: $($deletedFiles -join ', ')`n"
 }
 
 if ($renamedFiles.Count -gt 0) {
-    $commitParts += "Rename: $($renamedFiles -join ', ')
-" + 
-                   "重命名了文件: $($renamedFiles -join ', ')"
+    $commitParts += "Rename: $($renamedFiles -join ', ')`n重命名了文件: $($renamedFiles -join ', ')`n"
 }
 
 # Combine parts into final commit message
 if ($commitParts.Count -gt 0) {
-    $commitMessage = $commitParts -join "
-
-" + 
-                    "
-
-Auto commit generated at: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+    $commitMessage = $commitParts -join "`n`n" + 
+                    "`n`nAuto commit generated at: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
 } else {
     $commitMessage = "No changes to commit $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
 }
