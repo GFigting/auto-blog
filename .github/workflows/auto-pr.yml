@@ -28,17 +28,16 @@ jobs:
       - name: Create or update PR
         id: pr
         run: |
-          EXISTING_PR=$(gh pr list --base main --head stage --json number --jq '.[0].number // ""')
+          EXISTING_PR=$(gh pr list --base main --head stage --state open | grep -oP '#\K[0-9]+' || true)
 
           if [ -z "$EXISTING_PR" ]; then
-            PR_NUMBER=$(gh pr create \
+            gh pr create \
               --base main \
               --head stage \
               --title "Auto PR from stage to main" \
               --body "Automated PR from stage to main branch." \
-              --label autopr \
-              --json number \
-              --jq '.number')
+              --label autopr
+            PR_NUMBER=$(gh pr list --base main --head stage --state open | grep -oP '#\K[0-9]+')
           else
             PR_NUMBER=$EXISTING_PR
           fi
