@@ -19,23 +19,16 @@ Write-Host "=== GitHub Commit Automation ===" -ForegroundColor Green
 Write-Host "`n1. Checking current Git status..." -ForegroundColor Cyan
 git status
 
-# 2. Ask user to continue
-$continue = Read-Host "`nContinue with commit? (Y/N)"
-if ($continue -ne "Y" -and $continue -ne "y") {
-    Write-Host "`nCommit cancelled." -ForegroundColor Yellow
-    exit 0
-}
+# 2. Automatically continue with commit
+Write-Host "`n2. Automatically continuing with commit..." -ForegroundColor Cyan
 
 # 3. Add all changed files
 Write-Host "`n2. Adding all changed files..." -ForegroundColor Cyan
 git add .
 
-# 4. Get commit message
-$commitMessage = Read-Host "`n3. Please enter commit message"
-if ([string]::IsNullOrWhiteSpace($commitMessage)) {
-    Write-Host "`nCommit message cannot be empty. Commit cancelled." -ForegroundColor Red
-    exit 1
-}
+# 4. Generate automatic commit message
+$commitMessage = "Auto commit: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+Write-Host "`n3. Using automatic commit message: $commitMessage" -ForegroundColor Cyan
 
 # 5. Perform commit
 Write-Host "`n4. Performing commit..." -ForegroundColor Cyan
