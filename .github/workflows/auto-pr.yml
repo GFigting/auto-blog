@@ -24,6 +24,9 @@ jobs:
             --description "Automated PR from stage to main" \
             --color "#006b75" 2>/dev/null || true
 
+      - name: Fetch main branch
+        run: git fetch origin main
+
       - name: Create or update PR
         id: pr
         env:
@@ -32,11 +35,39 @@ jobs:
           EXISTING_PR=$(gh pr list --base main --head stage --state open | awk 'NR==1 {print $1}' | tr -d '#' || true)
 
           if [ -z "$EXISTING_PR" ]; then
+            # Get commit info
+            COMMIT_COUNT=$(git log origin/main..HEAD --oneline | wc -l)
+            LATEST_COMMIT=$(git log origin/main..HEAD --oneline -1)
+            FILES_CHANGED=$(git diff --name-only origin/main...HEAD | wc -l)
+            FILES_LIST=$(git diff --name-only origin/main...HEAD | sed 's/^/- /')
+            COMMIT_LIST=$(git log origin/main..HEAD --pretty=format:'- %s' | head -10)
+
+            # Generate title
+            if [ "$COMMIT_COUNT" -eq 1 ]; then
+              PR_TITLE=$(echo "$LATEST_COMMIT" | sed 's/^[0-9a-f]* //')
+            else
+              PR_TITLE="Merge stage: $COMMIT_COUNT commits, $FILES_CHANGED files"
+            fi
+
+            # Generate body
+            PR_BODY="## 📊 Summary
+            - **Commits**: $COMMIT_COUNT
+            - **Files changed**: $FILES_CHANGED
+
+            ## 📝 Recent Commits
+            $COMMIT_LIST
+
+            ## 📁 Changed Files
+            $FILES_LIST
+
+            ---
+            _This PR was automatically created by GitHub Actions_"
+
             gh pr create \
               --base main \
               --head stage \
-              --title "Auto PR from stage to main" \
-              --body "Automated PR from stage to main branch." \
+              --title "$PR_TITLE" \
+              --body "$PR_BODY" \
               --label autopr
             PR_NUMBER=$(gh pr list --base main --head stage --state open | awk 'NR==1 {print $1}' | tr -d '#')
           else
