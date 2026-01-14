@@ -12,7 +12,7 @@ permissions:
 
 env:
   GH_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
-  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  SILICONFLOW_API_KEY: ${{ secrets.SILICONFLOW_API_KEY }}
 
 jobs:
   chatbot:
@@ -258,11 +258,11 @@ jobs:
           if [ -n "${{ steps.commands.outputs.question }}" ]; then
             QUESTION="${{ steps.commands.outputs.question }}"
             
-            # Call OpenAI API
-            RESPONSE=$(curl -s https://api.openai.com/v1/chat/completions \
+            # Call SiliconFlow API (THUDM/GLM-4.1V-9B-Thinking)
+            RESPONSE=$(curl -s https://api.siliconflow.cn/v1/chat/completions \
               -H "Content-Type: application/json" \
-              -H "Authorization: Bearer $OPENAI_API_KEY" \
-              -d '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "'"$QUESTION"'"}], "temperature": 0.7, "max_tokens": 1000}')
+              -H "Authorization: Bearer $SILICONFLOW_API_KEY" \
+              -d '{"model": "THUDM/GLM-4.1V-9B-Thinking", "messages": [{"role": "user", "content": "'"$QUESTION"'"}], "temperature": 0.7, "max_tokens": 1000}')
             
             # Check if API call succeeded
             if [ $? -eq 0 ]; then
