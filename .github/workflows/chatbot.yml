@@ -226,12 +226,12 @@ jobs:
           ### 🧪 Test Information
 
           #### Test Commands
-          ```bash
+          \`\`\`bash
   npm run lint        # ESLint check
   npm run type-check  # TypeScript check
   npm run build       # Production build
   npm run format      # Format code
-  ```
+  \`\`\`
 
           #### Status
           - ⏳ Running in CI pipeline
