@@ -12,6 +12,7 @@ permissions:
 
 env:
   GH_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
 jobs:
   chatbot:
@@ -21,6 +22,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Check for @chatbot mention
         id: check
@@ -92,6 +96,17 @@ jobs:
             echo "status=true" >> $GITHUB_OUTPUT
           fi
 
+          # Extract question after @chatbot
+          # Check for explicit ask command
+          if echo "$BODY" | grep -qi "@chatbot.*ask"; then
+            QUESTION=$(echo "$BODY" | grep -o -i "@chatbot.*ask.*" | sed -e 's/.*@chatbot//i' -e 's/^[[:space:]]*ask[[:space:]]*//i' -e 's/[[:space:]]*$//')
+            echo "question=$QUESTION" >> $GITHUB_OUTPUT
+          # Check for direct question (no specific command)
+          elif ! echo "$BODY" | grep -qi "@chatbot.*\(summary\|review\|help\|test\|diff\|status\)"; then
+            QUESTION=$(echo "$BODY" | grep -o -i "@chatbot.*" | sed -e 's/.*@chatbot//i' -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+            echo "question=$QUESTION" >> $GITHUB_OUTPUT
+          fi
+
       - name: Generate response
         id: response
         if: steps.check.outputs.triggered == 'true'
@@ -125,6 +140,8 @@ jobs:
           | `@chatbot diff` | 查看代码差异 |
           | `@chatbot status` | 检查 CI 状态 |
           | `@chatbot test` | 运行测试信息 |
+          | `@chatbot <问题>` | 回答任何问题（直接提问） |
+          | `@chatbot ask <问题>` | 回答任何问题（明确命令格式） |
 
           ### 💡 Tips
           - 可以在 PR 描述或任何评论中使用 @chatbot
@@ -235,6 +252,42 @@ jobs:
           - Running in CI pipeline
           - Check Actions tab for results
           EOF
+          fi
+
+          # Add AI answer
+          if [ -n "${{ steps.commands.outputs.question }}" ]; then
+            QUESTION="${{ steps.commands.outputs.question }}"
+            
+            # Call OpenAI API
+            RESPONSE=$(curl -s https://api.openai.com/v1/chat/completions \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $OPENAI_API_KEY" \
+              -d '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "'"$QUESTION"'"}], "temperature": 0.7, "max_tokens": 1000}')
+            
+            # Check if API call succeeded
+            if [ $? -eq 0 ]; then
+              # Extract answer from response
+              ANSWER=$(echo "$RESPONSE" | jq -r '.choices[0].message.content')
+              
+              cat >> response.md << EOF
+
+          ### 🤖 AI Answer
+
+          **Question**: $QUESTION
+
+          **Answer**:
+          $ANSWER
+          EOF
+            else
+              cat >> response.md << EOF
+
+          ### 🤖 AI Answer
+
+          **Question**: $QUESTION
+
+          **Error**: 无法获取AI回答，请稍后再试。
+          EOF
+            fi
           fi
 
           # Default response if no specific command
