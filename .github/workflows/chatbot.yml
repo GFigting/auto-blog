@@ -259,15 +259,30 @@ jobs:
             QUESTION="${{ steps.commands.outputs.question }}"
 
             # Call SiliconFlow API
+            cat > request.json << EOF
+          {
+            "model": "THUDM/GLM-4.1V-9B-Thinking",
+            "messages": [
+              {
+                "role": "user",
+                "content": $(echo "$QUESTION" | jq -Rs .)
+              }
+            ],
+            "stream": false
+          }
+          EOF
+
             RESPONSE=$(curl -s https://api.siliconflow.cn/v1/chat/completions \
               -H "Content-Type: application/json" \
               -H "Authorization: Bearer ${{ secrets.SILICONFLOW_API_KEY }}" \
-              -d '{"model": "THUDM/GLM-4.1V-9B-Thinking", "messages": [{"role": "user", "content": "'"$(echo "$QUESTION" | jq -Rs .)"'"}], "temperature": 0.7, "max_tokens": 1000}')
+              -d @request.json 2>&1)
+
+            echo "API_STATUS=$?" >> $GITHUB_OUTPUT
 
             # Check if API call succeeded
-            if [ $? -eq 0 ]; then
+            if [ "$?" = "0" ]; then
               # Extract answer from response
-              ANSWER=$(echo "$RESPONSE" | jq -r '.choices[0].message.content' | sed 's/^"//;s/"$//')
+              ANSWER=$(echo "$RESPONSE" | jq -r '.choices[0].message.content // empty' | sed 's/^"//;s/"$//')
 
               cat >> response.md << 'EOF'
 
@@ -285,7 +300,11 @@ jobs:
 
           **Question**: $QUESTION
 
-          **Error**: 无法获取AI回答，请稍后再试。
+          **Error**: API 调用失败 (状态码: $?)
+
+          请检查：
+          1. SILICONFLOW_API_KEY 密钥是否正确配置
+          2. 查看 Actions 日志获取详细错误信息
           EOF
             fi
           fi
