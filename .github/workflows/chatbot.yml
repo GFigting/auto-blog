@@ -12,7 +12,7 @@ permissions:
 
 env:
   GH_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
-  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  SILICONFLOW_API_KEY: ${{ secrets.SILICONFLOW_API_KEY }}
 
 jobs:
   chatbot:
@@ -257,21 +257,36 @@ jobs:
           # Add AI answer
           if [ -n "${{ steps.commands.outputs.question }}" ]; then
             QUESTION="${{ steps.commands.outputs.question }}"
-            
-            # Call OpenAI API
-            RESPONSE=$(curl -s https://api.openai.com/v1/chat/completions \
-              -H "Content-Type: application/json" \
-              -H "Authorization: Bearer $OPENAI_API_KEY" \
-              -d '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "'"$QUESTION"'"}], "temperature": 0.7, "max_tokens": 1000}')
-            
-            # Check if API call succeeded
-            if [ $? -eq 0 ]; then
-              # Extract answer from response
-              ANSWER=$(echo "$RESPONSE" | jq -r '.choices[0].message.content')
-              
-              cat >> response.md << EOF
 
-          ### 🤖 AI Answer
+            # Call SiliconFlow API
+            cat > request.json << EOF
+          {
+            "model": "THUDM/GLM-4.1V-9B-Thinking",
+            "messages": [
+              {
+                "role": "user",
+                "content": $(echo "$QUESTION" | jq -Rs .)
+              }
+            ],
+            "stream": false
+          }
+          EOF
+
+            RESPONSE=$(curl -s https://api.siliconflow.cn/v1/chat/completions \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer ${{ secrets.SILICONFLOW_API_KEY }}" \
+              -d @request.json 2>&1)
+
+            echo "API_STATUS=$?" >> $GITHUB_OUTPUT
+
+            # Check if API call succeeded
+            if [ "$?" = "0" ]; then
+              # Extract answer from response
+              ANSWER=$(echo "$RESPONSE" | jq -r '.choices[0].message.content // empty' | sed 's/^"//;s/"$//')
+
+              cat >> response.md << 'EOF'
+
+          ### AI Answer
 
           **Question**: $QUESTION
 
@@ -279,13 +294,17 @@ jobs:
           $ANSWER
           EOF
             else
-              cat >> response.md << EOF
+              cat >> response.md << 'EOF'
 
-          ### 🤖 AI Answer
+          ### AI Answer
 
           **Question**: $QUESTION
 
-          **Error**: 无法获取AI回答，请稍后再试。
+          **Error**: API 调用失败 (状态码: $?)
+
+          请检查：
+          1. SILICONFLOW_API_KEY 密钥是否正确配置
+          2. 查看 Actions 日志获取详细错误信息
           EOF
             fi
           fi
