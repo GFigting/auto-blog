@@ -258,28 +258,36 @@ jobs:
           if [ -n "${{ steps.commands.outputs.question }}" ]; then
             QUESTION="${{ steps.commands.outputs.question }}"
 
-            cat >> response.md << 'EOF'
+            # Call SiliconFlow API
+            RESPONSE=$(curl -s https://api.siliconflow.cn/v1/chat/completions \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer ${{ secrets.SILICONFLOW_API_KEY }}" \
+              -d '{"model": "THUDM/GLM-4.1V-9B-Thinking", "messages": [{"role": "user", "content": "'"$(echo "$QUESTION" | jq -Rs .)"'"}], "temperature": 0.7, "max_tokens": 1000}')
 
-          ### Your Question
+            # Check if API call succeeded
+            if [ $? -eq 0 ]; then
+              # Extract answer from response
+              ANSWER=$(echo "$RESPONSE" | jq -r '.choices[0].message.content' | sed 's/^"//;s/"$//')
 
-          You asked: $QUESTION
+              cat >> response.md << 'EOF'
 
-          ### My Response
+          ### AI Answer
 
-          作为这个项目的助手，我尽力回答。不过我的能力有限，主要是：
-          - 回答项目相关问题
-          - 解释项目结构
-          - 帮助了解工作流程
-          - 提供技术支持
+          **Question**: $QUESTION
 
-          对于编程相关的问题，建议使用专业的 AI 工具：
-          - Claude AI (https://claude.ai)
-          - ChatGPT (https://chat.openai.com)
-          - GitHub Copilot
-          - Stack Overflow
-
-          有其他问题欢迎继续提问！
+          **Answer**:
+          $ANSWER
           EOF
+            else
+              cat >> response.md << 'EOF'
+
+          ### AI Answer
+
+          **Question**: $QUESTION
+
+          **Error**: 无法获取AI回答，请稍后再试。
+          EOF
+            fi
           fi
 
           # Default response if no specific command
